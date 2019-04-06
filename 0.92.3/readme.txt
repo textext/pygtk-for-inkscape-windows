@@ -51,17 +51,11 @@ All this suff really needs to be scripted!!
    bin directory. The mingw32/ mingw64 directories should now contain the subdirs include, Lib, and 
    share and the content of the former bin directory.
    
-5. Compare the content of the mingw32 directory with the content of a fresh 32-bit Inkscape 
+5. Just for precaution:
+   Compare the content of the mingw32 directory with the content of a fresh 32-bit Inkscape 
    installation (e.g. from a zip archive). Remove any duplicates from the mingw32 directory. 
-   Usually this should be files 
-	gspawn-win64-helper.exe
-	gspawn-win64-helper-console.exe
-	libgio-2.0-0.dll
-	libglib-2.0-0.dll
-	libgmodule-2.0-0.dll
-	libgobject-2.0-0.dll   
-   in the root dir and nothing in the subdirs. Repeat this with the mingw64 directory and a 
-   64-bit installation of Inkscape.
+   Repeat this with the mingw64 directory and a 64-bit installation of Inkscape. Currently,
+   there are no duplicates.	
    
 6. Build the file installation list using the Python script create_installer_file_lists.py
    In the script adapt the directory to use either files/mingw32 or files/mingw64 
