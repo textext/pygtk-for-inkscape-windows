@@ -1,0 +1,91 @@
+#! /bin/bash
+
+NoDownload=true
+
+declare -a PackageNames=("glib2-2.58.2-1"
+						 "gtksourceview2-2.10.5-3"
+						 "python2-cairo-1.18.0-1"
+						 "python2-gobject2-2.28.7-1"
+						 "python2-pygtk-2.24.0-6")
+
+## Download URLS						   
+URL64="http://repo.msys2.org/mingw/x86_64"
+URL32="http://repo.msys2.org/mingw/i686"
+
+## Directories into which the files are downloaded
+DownloadDir32=download-32bit
+DownloadDir64=download-64bit
+
+## Directory into which files are put for packaging
+PackageFileDir=files
+
+## Download and decompression section
+if [ "$NoDownload" = false ]; then
+
+	# Cleanup
+	rm -rf $DownloadDir32/* $DownloadDir64/*
+
+	## Download 32-bit files
+	for s in "${PackageNames[@]}"
+	do
+	   FileName=mingw-w64-i686-$s-any.pkg.tar.xz
+	   SourceName=$URL32/$FileName
+	   DestName=$DownloadDir32/$FileName
+	   wget -O $DestName $SourceName
+	done
+
+	## Download 64-bit files
+	for s in "${PackageNames[@]}"
+	do
+	   FileName=mingw-w64-x86_64-$s-any.pkg.tar.xz
+	   SourceName=$URL64/$FileName
+	   DestName=$DownloadDir64/$FileName
+	   wget -O $DestName $SourceName
+	done
+
+
+	## Decompress files
+	xz -d -f $DownloadDir32/*.xz
+	xz -d -f $DownloadDir64/*.xz
+
+fi
+
+## Remove packaging directory
+rm -rf $PackageFileDir/*
+
+## Unpack files into to directory which will be packaged
+for filename in {$DownloadDir32/*.tar,$DownloadDir64/*.tar}; do
+	echo $filename
+	tar -C $PackageFileDir -xvf $filename 
+	rm -f PackageFileDir/.*
+done
+
+## Copy self compiled stuff (see readme) into this directory structure
+cp -r compiled-32bit/mingw-w64-i686-pygtksourceview2/* $PackageFileDir
+cp -r compiled-64bit/mingw-w64-x86_64-pygtksourceview2/* $PackageFileDir
+rm -f PackageFileDir/.*
+
+## Move bin stuff to top level so it matches Inkscape
+echo ""
+echo "Moving files from bin dirs one level up..."
+mv $PackageFileDir/mingw32/bin/* $PackageFileDir/mingw32
+rmdir $PackageFileDir/mingw32/bin
+mv $PackageFileDir/mingw64/bin/* $PackageFileDir/mingw64
+rmdir $PackageFileDir/mingw64/bin
+
+## Delete duplicates found in Inkscape installation
+for dirname in {$PackageFileDir/mingw32/,$PackageFileDir/mingw64/}; do
+	rm $dirname/gspawn-win*-helper.exe
+	rm $dirname/gspawn-win*-helper-console.exe
+	rm $dirname/libgio-2.0-0.dll
+	rm $dirname/libglib-2.0-0.dll
+	rm $dirname/libgmodule-2.0-0.dll
+	rm $dirname/libgobject-2.0-0.dll
+	rm $dirname/*.py
+done	
+
+echo ""
+echo "Please compare structure with raw Inkscape installation and"
+echo "remove any duplicates."
+echo "Then, run python create_installer_file_lists.py"
+echo "Then build the NSIS package"
